@@ -8,10 +8,13 @@
       <div v-if="moviesAndSeries.length === 0 && !loading">Nessun film o serie TV trovati.</div>
       <div v-if="loading">Caricamento in corso...</div>
       <div v-for="item in moviesAndSeries" :key="item.id" class="media-item">
+        <img :src="getPosterUrl(item.poster_path)" alt="Copertina" class="poster" />
         <h3>{{ item.title }}</h3>
         <p><strong>Titolo:</strong> {{ item.original_title }}</p>
         <p><strong>Lingua:</strong> <img :src="getFlagUrl(item.original_language)" :alt="item.original_language" class="flag" /></p>
-        <p><strong>Voto:</strong> {{ item.vote_average }}</p>
+        <p><strong>Voto:</strong> 
+          <span v-html="getStars(item.vote_average)"></span>
+        </p>
         <p><strong>Tipo:</strong> {{ item.media_type === 'movie' ? 'Film' : 'Serie TV' }}</p>
       </div>
     </div>
@@ -51,6 +54,7 @@ export default {
           original_title: movie.original_title || movie.original_name,
           original_language: movie.original_language,
           vote_average: movie.vote_average,
+          poster_path: movie.poster_path,
           media_type: 'movie'
         }));
 
@@ -60,6 +64,7 @@ export default {
           original_title: tv.original_name,
           original_language: tv.original_language,
           vote_average: tv.vote_average,
+          poster_path: tv.poster_path,
           media_type: 'tv'
         }));
 
@@ -69,6 +74,12 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+
+    getPosterUrl(posterPath) {
+      const baseUrl = 'https://image.tmdb.org/t/p/';
+      const size = 'w500';
+      return posterPath ? `${baseUrl}${size}${posterPath}` : 'https://via.placeholder.com/500x750?text=Nessuna+Immagine';
     },
 
     getFlagUrl(languageCode) {
@@ -89,12 +100,29 @@ export default {
       return countryCode !== 'unknown'
         ? `https://flagcdn.com/16x12/${countryCode}.png`
         : 'https://via.placeholder.com/16x12?text=?';
+    },
+
+    getStars(voteAverage) {
+      const voteInFive = Math.ceil(voteAverage / 2);
+      let starsHtml = '';
+
+      for (let i = 0; i < 5; i++) {
+        if (i < voteInFive) {
+          starsHtml += '<i class="fas fa-star"></i>';
+        } else {
+          starsHtml += '<i class="far fa-star"></i>';
+        }
+      }
+
+      return starsHtml;
     }
   }
 };
 </script>
 
 <style lang="scss">
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
+
 #app {
   max-width: 800px;
   margin: 0 auto;
@@ -125,6 +153,8 @@ export default {
     width: 100%;
 
     .media-item {
+      display: flex;
+      align-items: center;
       border: 1px solid #ddd;
       padding: 10px;
       margin-bottom: 10px;
@@ -139,10 +169,22 @@ export default {
         margin: 5px 0;
       }
 
+      .poster {
+        width: 100px;
+        height: 150px;
+        object-fit: cover;
+        margin-right: 15px;
+      }
+
       .flag {
         width: 16px;
         height: 12px;
         margin-left: 5px;
+      }
+
+      i.fas.fa-star, i.far.fa-star {
+        color: #FFD700;
+        margin-right: 2px;
       }
     }
   }
